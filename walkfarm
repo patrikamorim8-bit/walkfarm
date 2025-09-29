@@ -1,0 +1,88 @@
+# local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+
+local player = Players.LocalPlayer
+local autoWalk = false
+local toggleKey = Enum.KeyCode.F  -- tecla para alternar
+local walkSpeed = 16              -- velocidade de caminhada desejada
+
+-- GUI principal
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "AutoWalkGui"
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 200, 0, 100)
+frame.Position = UDim2.new(0.3, 0, 0.3, 0)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.Active = true
+frame.Draggable = true -- sistema de drag automático do Roblox
+frame.Parent = screenGui
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 50, 0, 30)
+closeBtn.Position = UDim2.new(1, -55, 0, 5)
+closeBtn.Text = "X"
+closeBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeBtn.Parent = frame
+
+-- Botão para reabrir
+local reopenBtn = Instance.new("ImageButton")
+reopenBtn.Size = UDim2.new(0, 50, 0, 50)
+reopenBtn.Position = UDim2.new(0, 20, 0.8, 0)
+reopenBtn.Image = "rbxassetid://3926305904" -- ícone padrão (pode trocar)
+reopenBtn.ImageRectOffset = Vector2.new(324, 364)
+reopenBtn.ImageRectSize = Vector2.new(36, 36)
+reopenBtn.Visible = false
+reopenBtn.Parent = screenGui
+
+-- Fechar / reabrir
+closeBtn.MouseButton1Click:Connect(function()
+    frame.Visible = false
+    reopenBtn.Visible = true
+end)
+
+reopenBtn.MouseButton1Click:Connect(function()
+    frame.Visible = true
+    reopenBtn.Visible = false
+end)
+
+-- Funções de movimento
+local function stopMoving(humanoid)
+    if humanoid then
+        humanoid:Move(Vector3.new(), true)
+        humanoid.WalkSpeed = 30 -- restaura velocidade padrão
+    end
+end
+
+local function onToggle()
+    autoWalk = not autoWalk
+    local char = player.Character
+    local humanoid = char and char:FindFirstChildOfClass("Humanoid")
+    if not autoWalk then
+        stopMoving(humanoid)
+    end
+end
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == toggleKey then
+        onToggle()
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if not autoWalk then return end
+    local char = player.Character
+    if not char then return end
+
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+    if hrp and humanoid then
+        local forward = hrp.CFrame.LookVector
+        humanoid.WalkSpeed = walkSpeed
+        humanoid:Move(forward, true)
+    end
+end)
